@@ -13,16 +13,23 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         self.car_brand = kwargs['car_brand']
         self.pages = kwargs['pages']
+        self.proxies = None
+        self.actual_proxy = None
+        
+    def get_actual_proxy(self):
+        # we have to change proxy each time when we get banned
         self.proxies = self.get_proxies()
-        for proxy in self.proxies[:10]:
-            self.try_proxy(proxy)
+        for proxy in self.proxies:
+            if self.try_proxy(proxy):
+                self.actual_proxy = proxy
 
     def try_proxy(self, proxy):
         try:
-            response = requests.get('https://httpbin.org/ip', proxies={"http": proxy, "https": proxy}, timeout=3)
-            print (response.text)
+            requests.get('https://httpbin.org/ip', proxies={"http": proxy, "https": proxy}, timeout=3)
+            return True
         except:
-            print(f'bad proxy {proxy}')
+            # print(f'bad proxy {proxy}')
+            return False
 
     def get_proxies(self):
         proxy_url = 'https://free-proxy-list.net/'
