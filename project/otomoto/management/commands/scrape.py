@@ -69,5 +69,6 @@ class Command(BaseCommand):
                     car_links.add(car_link.find('a', class_='offer-title__link').get('href'))
                 counter += 1
         return car_links
+    
 
     
