@@ -3,6 +3,15 @@ from bs4 import BeautifulSoup
 
 from django.core.management import BaseCommand
 
+from otomoto.models import (
+    Car,
+    CarBrand,
+    CarCategory,
+    CarModel,
+    CarOffer,
+    Color
+)
+
 
 class Command(BaseCommand):
 
@@ -18,7 +27,9 @@ class Command(BaseCommand):
         self.proxies = None
         self.actual_proxy = None
         self.used_proxies = set()
-        self.car_link = self.get_car_links()
+        self.car_links = self.get_car_links()
+        #print(self.car_links)
+        self.scrape_cars()
 
     def get_actual_proxy(self):
         # we have to change proxy each time when we get banned
@@ -66,9 +77,40 @@ class Command(BaseCommand):
                 self.get_actual_proxy()
             else:
                 for car_link in soup.find_all(class_='adListingItem'):
-                    car_links.add(car_link.find('a', class_='offer-title__link').get('href'))
+                    car_links.add(car_link.find(
+                        'a', class_='offer-title__link').get('href'))
                 counter += 1
         return car_links
-    
 
-    
+    def scrape_car(self, link):
+        try:
+            soup = BeautifulSoup(
+                requests.get(link, proxies={
+                    'http': self.actual_proxy,
+                    'https': self.actual_proxy},
+                    timeout=3
+                ).text,
+                'html.parser'
+            )
+            car = {}
+            car['img'] = soup.find('img', class_='bigImage').get('data-lazy')
+            
+            # for row in soup.find('div', class_='offer-params').find_all(class_='params__item'):
+            #     print(row)
+            for row in soup.find('div', class_='offer-params').find_all(class_='offer-params__item'):
+                label = row.find(class_='offer-params__label').string
+                value = row.find(class_='offer-params__value').get_text().replace('\n','').strip()
+                car[label] = value
+                # for row in column.find('li', class_='offer-params__item'):
+                #     print(row)
+                #     print('///')
+            return car
+        except:
+            self.get_actual_proxy()
+            print('looking for new proxy')
+            self.scrape_car(link)
+        
+
+    def scrape_cars(self):
+        for link in list(self.car_links)[:4]:
+            print(self.scrape_car(link))
