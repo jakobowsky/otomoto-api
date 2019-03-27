@@ -35,6 +35,7 @@ class Color(models.Model):
         return self.name
 
 class CarOffer(models.Model):
+    otomoto_id = models.CharField(unique=True, max_length=30)
     car = models.ForeignKey(Car, on_delete=models.CASCADE)
     link = models.CharField(max_length=150)
     photo = models.CharField(max_length=300)

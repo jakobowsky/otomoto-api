@@ -33,18 +33,19 @@ class Command(BaseCommand):
 
     def get_actual_proxy(self):
         # we have to change proxy each time when we get banned
-        if self.actual_proxy:
-            self.used_proxies.add(self.actual_proxy)
         self.proxies = self.get_proxies()
         for proxy in self.proxies:
+            print('looking for new proxy')
             if self.try_proxy(proxy):
                 if proxy not in self.used_proxies:
+                    print('got new one')
                     self.actual_proxy = proxy
+                    return
 
     def try_proxy(self, proxy):
         try:
             requests.get('https://httpbin.org/ip',
-                         proxies={"http": proxy, "https": proxy}, timeout=3)
+                         proxies={"http": proxy, "https": proxy}, timeout=4)
             return True
         except:
             # print(f'bad proxy {proxy}')
@@ -69,11 +70,12 @@ class Command(BaseCommand):
                     requests.get(link, proxies={
                         'http': self.actual_proxy,
                         'https': self.actual_proxy},
-                        timeout=3
+                        timeout=4
                     ).text,
                     'html.parser'
                 )
             except:
+                self.used_proxies.add(self.actual_proxy)
                 self.get_actual_proxy()
             else:
                 for car_link in soup.find_all(class_='adListingItem'):
@@ -88,29 +90,37 @@ class Command(BaseCommand):
                 requests.get(link, proxies={
                     'http': self.actual_proxy,
                     'https': self.actual_proxy},
-                    timeout=3
+                    timeout=4
                 ).text,
                 'html.parser'
             )
+
             car = {}
+            #print(soup.find('div', class_='offer-content__metabar').find_all(class_='offer-meta__item')[1].find('offer-meta__value'))
+            car['id'] = soup.find('div', class_='offer-content__metabar').find_all(class_='offer-meta__item')[1].find(class_='offer-meta__value').string
             car['img'] = soup.find('img', class_='bigImage').get('data-lazy')
-            
-            # for row in soup.find('div', class_='offer-params').find_all(class_='params__item'):
-            #     print(row)
             for row in soup.find('div', class_='offer-params').find_all(class_='offer-params__item'):
                 label = row.find(class_='offer-params__label').string
-                value = row.find(class_='offer-params__value').get_text().replace('\n','').strip()
+                try:
+                    value = row.find(class_='offer-params__value').get_text().replace('\n','').strip()
+                except:
+                    value = None
                 car[label] = value
-                # for row in column.find('li', class_='offer-params__item'):
-                #     print(row)
-                #     print('///')
-            return car
+            print(car)
+            print('')
+            return True
         except:
+            self.used_proxies.add(self.actual_proxy)
             self.get_actual_proxy()
-            print('looking for new proxy')
-            self.scrape_car(link)
+            return None
         
 
     def scrape_cars(self):
-        for link in list(self.car_links)[:4]:
-            print(self.scrape_car(link))
+        i = 0
+        links = list(self.car_links)
+        while i < 4:
+            if not self.scrape_car(links[i]):
+                continue
+            else:
+                i += 1
+
