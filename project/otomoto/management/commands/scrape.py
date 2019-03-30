@@ -33,6 +33,7 @@ class Command(BaseCommand):
             'Accept-Language': 'en-US,en;q=0.8',
             'Connection': 'keep-alive'
         }
+        self.same_car = 0
         self.car_brand = kwargs['car_brand']
         self.pages = kwargs['pages']
         self.proxies = None
@@ -146,13 +147,16 @@ class Command(BaseCommand):
     def format_data(self, car):
         # format car's data such like
         # year, price, mileage, horsepower, state
-        print(car['Rok produkcji'])
-        print(car['price'])
+        car['Przebieg'] = self.get_number(car['Przebieg'])
+        car['Moc'] = self.get_number(car['Moc'])
         return car
 
 
     def add_car_to_db(self, car):
         car = self.format_data(car)
+        print(' ')
+        print(car)
+        print(' ')
         # car = self.get_car(car)
         # color = self.get_color(car)
         # otomoto_id = car.get('id')
@@ -203,16 +207,36 @@ class Command(BaseCommand):
                 car[label] = value
             self.add_car_to_db(car)
             return True
-        except:
+        except AttributeError as e:
+            print('wrong info about car')
+            print(e)
+            return True
+        
+        except KeyError as e:
+            print('key wrong car')
+            print(e)
+            return True
+
+        except Exception as e:
+            print('some exception maybe new proxy required')
+            print(car)
+            print(type(e))
+            self.same_car += 1
+            if self.same_car == 3:
+                self.same_car = 0
+                print('smth wrong with this car, we will skip this one')
+                return True
             self.used_proxies.add(self.actual_proxy)
             self.get_actual_proxy()
-            return None
+            return False
 
     def scrape_cars(self):
-        i = 0
         links = list(self.car_links)
-        while i < 4:
-            if not self.scrape_car(links[i]):
-                continue
-            else:
-                i += 1
+        current_link = links.pop()
+        while links:
+            print(len(links))
+            if self.scrape_car(current_link):
+                current_link = links.pop()
+                
+            
+
