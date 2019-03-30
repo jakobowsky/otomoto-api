@@ -23,6 +23,7 @@ class Command(BaseCommand):
                             help='Number of pages to scrape')
 
     def handle(self, *args, **kwargs):
+
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) '
             'AppleWebKit/537.11 (KHTML, like Gecko) '
@@ -33,6 +34,7 @@ class Command(BaseCommand):
             'Accept-Language': 'en-US,en;q=0.8',
             'Connection': 'keep-alive'
         }
+
         self.same_car = 0
         self.car_brand = kwargs['car_brand']
         self.pages = kwargs['pages']
@@ -42,6 +44,9 @@ class Command(BaseCommand):
         self.car_links = self.get_car_links()
         # print(self.car_links)
         self.scrape_cars()
+        self.brands = (
+
+        )
 
     def get_actual_proxy(self):
         # we have to change proxy each time when we get banned
@@ -151,28 +156,37 @@ class Command(BaseCommand):
         car['Moc'] = self.get_number(car['Moc'])
         return car
 
+    def is_new(self, car):
+        if car['Stan'] == 'Używane':
+            return False
+        return True
 
     def add_car_to_db(self, car):
         car = self.format_data(car)
-        print(' ')
-        print(car)
-        print(' ')
-        # car = self.get_car(car)
-        # color = self.get_color(car)
-        # otomoto_id = car.get('id')
-        # if not otomoto_id:
-        #     print('Nie udalo sie dodac auta: ', car)
-        #     return False
-        # _, added = CarOffer.objects.get_or_create(
-        #     otomoto_id=otomoto_id,
-        #     defaults={
-        #         'car': car,
-        #         'link': car.get('link'),
-        #         'photo': car.get('img'),
-        #         'year': car.get('Rok produkcji')
-        #     }
-
-        # )
+        color = self.get_color(car)
+        car_obj = self.get_car(car)
+        otomoto_id = car.get('id')
+        if not otomoto_id:
+            print('Nie udalo sie dodac auta: ', car)
+            return False
+        _, added = CarOffer.objects.get_or_create(
+            otomoto_id=otomoto_id,
+            defaults={
+                'car': car_obj,
+                'link': car.get('link'),
+                'photo': car.get('img'),
+                'year': int(car.get('Rok produkcji')),
+                'price': int(car.get('price')),
+                'color': color,
+                'mileage': int(car.get('Przebieg')),
+                'horsepower': int(car.get('Moc')),
+                'isnew': self.is_new(car)
+            }
+        )
+        if added:
+            print('new car')
+        else:
+            print('already exist')
 
     def get_number(self, number):
         number = ' '.join(number.split()).replace(' ', '', 1)
