@@ -44,3 +44,4 @@ class CarOffer(models.Model):
     color = models.ForeignKey(Color, on_delete=models.CASCADE)
     mileage = models.PositiveIntegerField(default=0)
     horsepower = models.PositiveIntegerField(default=100)
+    isnew = models.BooleanField(default=True)

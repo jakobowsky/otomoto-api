@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+import re
 
 from django.core.management import BaseCommand
 
@@ -80,7 +81,7 @@ class Command(BaseCommand):
         car_links = set()
         counter = 1
         while counter <= self.pages:
-            link = f'https://www.otomoto.pl/osobowe/{self.car_brand}/?page={counter}'
+            link = f'https://www.otomoto.pl/osobowe/{self.car_brand}/?search_filter_enum_damaged=&page={counter}'
             try:
                 soup = BeautifulSoup(
                     requests.get(link, proxies={
@@ -136,9 +137,42 @@ class Command(BaseCommand):
         )
         return car
 
+    def get_color(self, car):
+        color, _ = Color.objects.get_or_create(
+            name=car.get('Kolor', 'undefined')
+        )
+        return color
+
+    def format_data(self, car):
+        # format car's data such like
+        # year, price, mileage, horsepower, state
+        print(car['Rok produkcji'])
+        print(car['price'])
+        return car
+
+
     def add_car_to_db(self, car):
-        car = self.get_car(car)
-        
+        car = self.format_data(car)
+        # car = self.get_car(car)
+        # color = self.get_color(car)
+        # otomoto_id = car.get('id')
+        # if not otomoto_id:
+        #     print('Nie udalo sie dodac auta: ', car)
+        #     return False
+        # _, added = CarOffer.objects.get_or_create(
+        #     otomoto_id=otomoto_id,
+        #     defaults={
+        #         'car': car,
+        #         'link': car.get('link'),
+        #         'photo': car.get('img'),
+        #         'year': car.get('Rok produkcji')
+        #     }
+
+        # )
+
+    def get_number(self, number):
+        number = ' '.join(number.split()).replace(' ', '', 1)
+        return number[:number.find(' ')]
 
     def scrape_car(self, link):
         try:
@@ -151,12 +185,14 @@ class Command(BaseCommand):
                 ).text,
                 'html.parser'
             )
-
             car = {}
             #print(soup.find('div', class_='offer-content__metabar').find_all(class_='offer-meta__item')[1].find('offer-meta__value'))
+            car['link'] = link
             car['id'] = soup.find('div', class_='offer-content__metabar').find_all(
                 class_='offer-meta__item')[1].find(class_='offer-meta__value').string
             car['img'] = soup.find('img', class_='bigImage').get('data-lazy')
+            price = soup.find('span', class_='offer-price__number').get_text() #.strip().replace(' ', '')
+            car['price'] = self.get_number(price)
             for row in soup.find('div', class_='offer-params').find_all(class_='offer-params__item'):
                 label = row.find(class_='offer-params__label').string
                 try:
