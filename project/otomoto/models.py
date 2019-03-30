@@ -42,3 +42,5 @@ class CarOffer(models.Model):
     year = models.PositiveSmallIntegerField()
     price = models.PositiveIntegerField()
     color = models.ForeignKey(Color, on_delete=models.CASCADE)
+    mileage = models.PositiveIntegerField(default=0)
+    horsepower = models.PositiveIntegerField(default=100)
