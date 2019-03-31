@@ -7,6 +7,7 @@ class CarBrand(models.Model):
     def __str__(self):
         return self.name
 
+
 class CarModel(models.Model):
     name = models.CharField(max_length=50)
 
@@ -20,6 +21,7 @@ class CarCategory(models.Model):
     def __str__(self):
         return self.name
 
+
 class Car(models.Model):
     brand = models.ForeignKey(CarBrand, on_delete=models.CASCADE)
     model = models.ForeignKey(CarModel, on_delete=models.CASCADE)
@@ -28,11 +30,13 @@ class Car(models.Model):
     def __str__(self):
         return f'{self.brand.name} {self.model.name}'
 
+
 class Color(models.Model):
     name = models.CharField(max_length=50)
 
     def __str__(self):
         return self.name
+
 
 class CarOffer(models.Model):
     otomoto_id = models.CharField(unique=True, max_length=30)
@@ -45,3 +49,6 @@ class CarOffer(models.Model):
     mileage = models.PositiveIntegerField(default=0)
     horsepower = models.PositiveIntegerField(default=100)
     isnew = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f'{self.otomoto_id} {self.car.brand.name} {self.car.model.name}'

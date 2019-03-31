@@ -186,13 +186,20 @@ class Command(BaseCommand):
         if added:
             print('new car')
         else:
-            print('already exist')
+            print('already exists')
 
-    def get_number(self, number):
-        number = ' '.join(number.split()).replace(' ', '', 1)
-        return number[:number.find(' ')]
+    def get_first_letter(self, string):
+        for x in string:
+            if not x.isdigit():
+                return x
+
+    def get_number(self, number):        
+        number = ' '.join(number.split()).replace(' ', '')
+        number = number[:number.find(self.get_first_letter(number))]
+        return number
 
     def scrape_car(self, link):
+        car = {}
         try:
             soup = BeautifulSoup(
                 requests.get(link, proxies={
@@ -202,9 +209,7 @@ class Command(BaseCommand):
                     headers=self.headers
                 ).text,
                 'html.parser'
-            )
-            car = {}
-            #print(soup.find('div', class_='offer-content__metabar').find_all(class_='offer-meta__item')[1].find('offer-meta__value'))
+            )            
             car['link'] = link
             car['id'] = soup.find('div', class_='offer-content__metabar').find_all(
                 class_='offer-meta__item')[1].find(class_='offer-meta__value').string
@@ -224,13 +229,11 @@ class Command(BaseCommand):
         except AttributeError as e:
             print('wrong info about car')
             print(e)
-            return True
-        
+            return True        
         except KeyError as e:
             print('key wrong car')
             print(e)
             return True
-
         except Exception as e:
             print('some exception maybe new proxy required')
             print(car)
