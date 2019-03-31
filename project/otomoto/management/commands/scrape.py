@@ -45,7 +45,36 @@ class Command(BaseCommand):
         # print(self.car_links)
         self.scrape_cars()
         self.brands = (
-
+            'alfa-romeo',
+            'audi',
+            'bmw',
+            'chevrolet',
+            'citroen',
+            'dacia',
+            'fiat',
+            'ferrari',
+            'dodge',
+            'ford',
+            'honda',
+            'hyundai',
+            'infiniti',
+            'jaguar',
+            'jeep',
+            'kia',
+            'land-rover',
+            'lexus',
+            'mazda',
+            'mercedes-benz',
+            'mitsubishi',
+            'nissan',
+            'opel',
+            'peugeot',
+            'porsche',
+            'renault',
+            'skoda',
+            'toyota',
+            'volkswagen',
+            'volvo',
         )
 
     def get_actual_proxy(self):

@@ -45,3 +45,57 @@ class CarOfferSerializer(serializers.ModelSerializer):
             'car',
 
         )
+
+class CarSerializer(serializers.ModelSerializer):
+
+    car = serializers.SerializerMethodField()
+
+    def get_car(self, car):
+        return {
+            'brand': car.brand.name,
+            'category': car.category.name,
+            'model': car.model.name,
+        }
+
+    class Meta:
+        model = Car
+        fields = (
+            'id',
+            'car',
+        )
+
+class ColorSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Color
+        fields = (
+            'id',
+            'name',
+        )
+
+class CarCategorySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = CarCategory
+        fields = (
+            'id',
+            'name',
+        )
+
+class CarModelSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = CarModel
+        fields = (
+            'id',
+            'name',
+        )
+
+class CarBrandSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = CarBrand
+        fields = (
+            'id',
+            'name',
+        )
