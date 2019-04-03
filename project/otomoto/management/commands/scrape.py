@@ -42,7 +42,6 @@ class Command(BaseCommand):
         self.actual_proxy = None
         self.used_proxies = set()
         self.car_links = self.get_car_links()
-        # print(self.car_links)
         self.scrape_cars()
         self.brands = (
             'alfa-romeo',
@@ -243,7 +242,7 @@ class Command(BaseCommand):
             car['id'] = soup.find('div', class_='offer-content__metabar').find_all(
                 class_='offer-meta__item')[1].find(class_='offer-meta__value').string
             car['img'] = soup.find('img', class_='bigImage').get('data-lazy')
-            price = soup.find('span', class_='offer-price__number').get_text() #.strip().replace(' ', '')
+            price = soup.find('span', class_='offer-price__number').get_text()
             car['price'] = self.get_number(price)
             for row in soup.find('div', class_='offer-params').find_all(class_='offer-params__item'):
                 label = row.find(class_='offer-params__label').string
