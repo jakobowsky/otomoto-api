@@ -5,6 +5,10 @@ import time
 import asyncio
 import aiohttp
 import functools
+import urllib.request
+import socket
+import urllib.error
+
 
 from django.core.management import BaseCommand
 
@@ -19,7 +23,8 @@ from otomoto.models import (
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-#For the future purposes - asynchronic
+# For the future purposes - asynchronic
+
 
 class Command(BaseCommand):
 
@@ -43,35 +48,66 @@ class Command(BaseCommand):
         # print(self.actual_proxy)
         # print(self.try_proxy(self.actual_proxy))
 
-        p = '203.128.94.102:48476'
+        p = '82.135.46.139:80'
         self.proxy = {"http": p, "https": p}
-        print(self.try_proxy(self.proxy))
+        print(self.try_proxy(p))
 
-        urls = ['http://www.google.com',
-                'http://www.yandex.ru', 'http://www.python.org']
+        self.urls = ['http://www.google.com',
+                     'http://www.yandex.ru', 'http://www.python.org']
 
         async def main():
             loop = asyncio.get_event_loop()
-            future1 = loop.run_in_executor(None, lambda: requests.get(
-                url='http://www.google.com',
-                headers=self.headers,
-                proxies=self.proxy,
-                timeout=4,
-            ))
-            future2 = loop.run_in_executor(None, lambda: requests.get(
-                url='http://www.google.com',
-                headers=self.headers,
-                proxies=self.proxy,
-                timeout=4,
-            ))
-            response1 = await future1
-            response2 = await future2
-            print(response1.text)
-            print(response2.text)
+            for url in self.urls:
+                future1 = loop.run_in_executor(None, lambda: requests.get(
+                    url=url,
+                    headers=self.headers,
+                    proxies=self.proxy,
+                    timeout=5,
+                ))
+                response1 = await future1
+                print(response1)
 
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(main())
+        # loop = asyncio.get_event_loop()
+        # loop.run_until_complete(main())
 
+    def get_actual_proxy(self):
+        # we have to change proxy each time when we get banned
+        print(self.used_proxies)
+        self.proxies = self.get_proxies()
+        for proxy in self.proxies:
+            print('looking for new proxy')
+            if self.try_proxy(proxy):
+                if proxy not in self.used_proxies:
+                    print('got new one')
+                    self.actual_proxy = proxy
+                    return
+
+    def try_proxy(self, proxy):
+        # we have to pass the proxy as arguments
+        try:
+            x = requests.get('https://httpbin.org/ip',
+                             proxies={"http": proxy, "https": proxy}, timeout=4, headers=self.headers)
+            print('working proxy: ', x)
+            return True
+        except Exception as e:
+            print('please pass proxy as asrgument')
+            # print(f'bad proxy {proxy}')
+            print(e)
+            return False
+
+    def get_proxies(self):
+        proxy_url = 'https://free-proxy-list.net/'
+        soup = BeautifulSoup(requests.get(proxy_url).text, 'html.parser')
+        proxies = set()
+        for proxy in soup.find(id='proxylisttable').tbody.find_all('tr'):
+            if proxy.find_all('td')[6].string == 'no':
+                proxies.add(
+                    f"{proxy.find_all('td')[0].string}:{proxy.find_all('td')[1].string}")
+        return proxies
+
+
+#############################################################################
+        # OLD SNIPPETS
         # @asyncio.coroutine
         # def main():
         #     loop = asyncio.get_event_loop()
@@ -127,34 +163,3 @@ class Command(BaseCommand):
     # for response in requests:
     #     print(response)
     # ////////////////////////////////////////////////////////////////
-
-    def get_actual_proxy(self):
-        # we have to change proxy each time when we get banned
-        print(self.used_proxies)
-        self.proxies = self.get_proxies()
-        for proxy in self.proxies:
-            print('looking for new proxy')
-            if self.try_proxy(proxy):
-                if proxy not in self.used_proxies:
-                    print('got new one')
-                    self.actual_proxy = proxy
-                    return
-
-    def try_proxy(self, proxy):
-        try:
-            requests.get('https://httpbin.org/ip',
-                         proxies={"http": proxy, "https": proxy}, timeout=4)
-            return True
-        except:
-            # print(f'bad proxy {proxy}')
-            return False
-
-    def get_proxies(self):
-        proxy_url = 'https://free-proxy-list.net/'
-        soup = BeautifulSoup(requests.get(proxy_url).text, 'html.parser')
-        proxies = set()
-        for proxy in soup.find(id='proxylisttable').tbody.find_all('tr'):
-            if proxy.find_all('td')[6].string == 'no':
-                proxies.add(
-                    f"{proxy.find_all('td')[0].string}:{proxy.find_all('td')[1].string}")
-        return proxies
